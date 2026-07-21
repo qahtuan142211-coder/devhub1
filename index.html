@@ -3,528 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevHub Pro - Code Repository</title>
+    <title>DevHub Pro - Cloud Sync</title>
+    <!-- THÊM THƯ VIỆN FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    
     <style>
         :root[data-theme="dark"] {
             --bg-main: #0d1117; --bg-panel: #161b22; --bg-header: #010409;
             --border-color: #30363d; --text-main: #c9d1d9; --text-muted: #8b949e;
             --accent-blue: #58a6ff; --btn-green: #238636; --btn-green-hover: #2ea043;
-            --btn-red: #da3633; --btn-red-hover: #f85149; --radius: 8px;
-            --shadow: 0 8px 24px rgba(0,0,0,0.5); --code-bg: #0d1117; --code-text: #e6edf3;
-            --item-hover: #21262d;
+            --btn-red: #da3633; --btn-red-hover: #f85149; 
+            --radius: 8px; --shadow: 0 8px 24px rgba(0,0,0,0.5); 
+            --code-bg: #0d1117; --code-text: #e6edf3; --item-hover: #21262d;
         }
 
         :root[data-theme="light"] {
             --bg-main: #f4f6f8; --bg-panel: #ffffff; --bg-header: #ffffff;
             --border-color: #d0d7de; --text-main: #24292f; --text-muted: #57606a;
             --accent-blue: #0969da; --btn-green: #1f883d; --btn-green-hover: #1a7f37;
-            --btn-red: #cf222e; --btn-red-hover: #a40e26; --radius: 8px;
-            --shadow: 0 8px 24px rgba(140, 149, 159, 0.2); --code-bg: #f6f8fa; --code-text: #24292f;
-            --item-hover: #f3f4f6;
+            --btn-red: #cf222e; --btn-red-hover: #a40e26;
+            --radius: 8px; --shadow: 0 8px 24px rgba(140, 149, 159, 0.2); 
+            --code-bg: #f6f8fa; --code-text: #24292f; --item-hover: #f3f4f6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-main); }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
         body { background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         .hidden { display: none !important; }
 
-        .container { max-width: 950px; margin: 40px auto; width: 100%; padding: 0 20px; flex: 1; animation: fadeInScreen 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes fadeInScreen {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        header { background-color: var(--bg-header); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .logo { font-size: 1.5rem; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+        .container { max-width: 1000px; margin: 40px auto; width: 100%; padding: 0 20px; flex: 1; }
+        
+        header { background-color: var(--bg-header); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--text-main); }
         .user-info { display: flex; align-items: center; gap: 15px; }
 
         button { 
             cursor: pointer; padding: 8px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500; 
             border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); 
-            display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s, border-color 0.2s;
         }
-        button:hover { 
-            background: var(--item-hover); 
-            border-color: var(--text-muted); 
-            transform: translateY(-2px) scale(1.02); 
-            box-shadow: 0 6px 15px rgba(0,0,0,0.1); 
-        }
-        button:active { 
-            transform: translateY(1px) scale(0.98); 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-        }
-
+        button:hover { background: var(--item-hover); border-color: var(--text-muted); }
         .btn-primary { background: var(--btn-green); color: white; border-color: transparent; }
         .btn-primary:hover { background: var(--btn-green-hover); }
         .btn-danger { background: transparent; color: var(--btn-red-hover); border-color: var(--border-color); }
         .btn-danger:hover { background: var(--btn-red); color: white; }
         
-        input[type="text"], input[type="password"] { padding: 10px 14px; background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius); outline: none; transition: all 0.3s ease; }
-        input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 4px rgba(9, 105, 218, 0.15); transform: translateY(-1px); }
-
-        .auth-box { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 35px; border-radius: var(--radius); width: 380px; margin: 80px auto; text-align: center; box-shadow: var(--shadow); animation: zoomInModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        input[type="text"], input[type="password"] { padding: 10px 14px; background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main); border-radius: var(--radius); outline: none; width: 100%;}
+        
+        .auth-box { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 35px; border-radius: var(--radius); width: 400px; margin: 60px auto; }
         .input-group { margin-bottom: 18px; text-align: left; }
         .input-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
-        .input-group input { width: 100%; }
 
-        .toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; flex-wrap: wrap; gap: 12px; }
-        .search-box { flex: 1; min-width: 220px; max-width: 400px; position: relative; }
-        .search-box input { width: 100%; padding-left: 36px; }
-        .search-box::before { content: '🔍'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; }
-
-        .stats-bar { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-
-        .file-list { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
-        .file-item { 
-            display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; 
-            border-bottom: 1px solid var(--border-color); 
-            transition: background 0.2s ease, transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), padding-left 0.2s ease; 
-        }
-        .file-item:last-child { border-bottom: none; }
-        .file-item:hover { 
-            background: var(--item-hover); 
-            padding-left: 26px; 
-            border-left: 4px solid var(--accent-blue);
-        }
-        .file-info { display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; }
-        .file-name { color: var(--accent-blue); font-weight: 600; font-family: monospace; font-size: 15px; }
+        .toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
+        .file-list { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border-color); }
+        .file-info { cursor: pointer; flex: 1; font-family: monospace; font-size: 15px; color: var(--accent-blue);}
         
-        .badge { padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; border: 1px solid transparent; }
-        .badge.js { color: #d4a72c; border-color: rgba(212, 167, 44, 0.3); background: rgba(212, 167, 44, 0.1); }
-        .badge.html { color: #bc4c28; border-color: rgba(188, 76, 40, 0.3); background: rgba(188, 76, 40, 0.1); }
-        .badge.css { color: #4338ca; border-color: rgba(67, 56, 202, 0.3); background: rgba(67, 56, 202, 0.3); }
-        .badge.py { color: #1d6396; border-color: rgba(29, 99, 150, 0.3); background: rgba(29, 99, 150, 0.1); }
-        .badge.json { color: #1a7f37; border-color: rgba(26, 127, 55, 0.3); background: rgba(26, 127, 55, 0.1); }
-        .badge.txt { color: var(--text-muted); border-color: var(--border-color); background: var(--bg-main); }
+        .editor-header { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+        #filenameInput { font-family: monospace; font-size: 16px; font-weight: bold; flex: 1; }
+        .code-area { width: 100%; height: 520px; background: var(--code-bg); color: var(--code-text); font-family: 'Fira Code', monospace; padding: 20px; border: 1px solid var(--border-color); border-radius: var(--radius); resize: vertical; outline: none; }
 
-        .btn-delete { background: transparent; border: none; color: var(--text-muted); font-size: 16px; padding: 6px; border-radius: 4px; box-shadow: none; }
-        .btn-delete:hover { color: var(--btn-red-hover); background: var(--bg-main); transform: scale(1.2) rotate(90deg); }
-
-        .editor-header { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; }
-        #filenameInput { font-family: monospace; font-size: 16px; font-weight: bold; width: 300px; flex: 1; }
-        
-        .code-wrapper { position: relative; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; display: flex; background: var(--code-bg); box-shadow: var(--shadow); }
-        .code-area { 
-            width: 100%; height: 520px; background: var(--code-bg); color: var(--code-text); 
-            font-family: 'Fira Code', Consolas, Monaco, 'Courier New', monospace; font-size: 14.5px; 
-            padding: 20px; border: none; resize: vertical; line-height: 1.6; outline: none; tab-size: 4;
-        }
-        .code-area:focus { box-shadow: inset 0 0 0 2px var(--accent-blue); }
-
-        .modal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; 
-            z-index: 1000; backdrop-filter: blur(5px); 
-            animation: fadeInOverlay 0.25s ease forwards;
-        }
-        @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-
-        .modal-box { 
-            background: var(--bg-panel); border: 1px solid var(--border-color); padding: 25px; 
-            border-radius: var(--radius); width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-            animation: zoomInModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
-        }
-        @keyframes zoomInModal { 
-            from { opacity: 0; transform: scale(0.85) translateY(10px); } 
-            to { opacity: 1; transform: scale(1) translateY(0); } 
-        }
-        .modal-box h3 { margin-bottom: 10px; }
-        .modal-box p { margin-bottom: 20px; color: var(--text-muted); font-size: 14px; line-height: 1.4; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        /* Loader */
+        .cloud-syncing { font-size: 12px; color: var(--accent-blue); animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
 
         #toastContainer { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
-        .toast { 
-            min-width: 260px; padding: 14px 20px; border-radius: var(--radius); background: var(--bg-panel); 
-            color: var(--text-main); border: 1px solid var(--border-color); border-left: 5px solid var(--accent-blue); 
-            box-shadow: var(--shadow); font-size: 14px; 
-            animation: slideInRight 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fadeOutToast 0.3s ease 2.7s forwards; 
-        }
-        .toast.success { border-left-color: var(--btn-green); }
-        .toast.error { border-left-color: var(--btn-red-hover); }
-        .toast.warning { border-left-color: #d29922; }
-        @keyframes slideInRight { 
-            from { transform: translateX(120%); opacity: 0; } 
-            to { transform: translateX(0); opacity: 1; } 
-        }
-        @keyframes fadeOutToast { 
-            from { opacity: 1; transform: scale(1); } 
-            to { opacity: 0; transform: scale(0.9); } 
-        }
+        .toast { min-width: 260px; padding: 14px 20px; border-radius: var(--radius); background: var(--bg-panel); border-left: 5px solid var(--accent-blue); font-size: 14px; }
     </style>
 </head>
 <body>
-
     <div id="toastContainer"></div>
 
     <header id="mainHeader" class="hidden">
-        <div class="logo">🚀 DevHub Pro</div>
+        <div class="logo">☁️ DevHub Cloud</div>
         <div class="user-info">
+            <span id="syncStatus" class="cloud-syncing hidden">Đang đồng bộ... ☁️</span>
             <span id="displayUsername" style="font-weight: 600;"></span>
-            <button id="themeToggleBtn" onclick="Theme.toggle()" title="Đổi giao diện sáng/tối">🌙</button>
             <button onclick="App.logout()">🚪 Đăng xuất</button>
         </div>
     </header>
 
     <div id="authScreen" class="container">
-        <div style="position: absolute; top: 20px; right: 20px;">
-            <button id="themeToggleBtnAuth" onclick="Theme.toggle()" title="Đổi giao diện sáng/tối">🌙 Giao diện</button>
-        </div>
         <div class="auth-box">
-            <h2 style="margin-bottom: 8px;">DevHub Pro</h2>
-            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">Hệ thống lưu trữ Code Cá nhân</p>
+            <h2 style="text-align:center; margin-bottom:20px;">Đăng Nhập Đám Mây</h2>
             <div class="input-group">
-                <label>Tên đăng nhập</label>
-                <input type="text" id="authUsername" placeholder="Nhập username...">
+                <label>Tên đăng nhập (Username)</label>
+                <input type="text" id="loginUser">
             </div>
             <div class="input-group">
-                <label>Mật khẩu</label>
-                <input type="password" id="authPassword" placeholder="Nhập password...">
+                <label>Mật khẩu (Password)</label>
+                <input type="password" id="loginPass">
             </div>
-            <button class="btn-primary" style="width: 100%; justify-content: center; padding: 11px; margin-top: 5px;" onclick="App.login()">Truy cập Hệ thống</button>
+            <button class="btn-primary" style="width:100%; margin-bottom: 10px;" onclick="Auth.login()">Đăng Nhập</button>
+            <button style="width:100%;" onclick="Auth.register()">Tạo Tài Khoản Mới</button>
         </div>
     </div>
 
     <div id="dashboardScreen" class="container hidden">
         <div class="toolbar">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Tìm kiếm file theo tên..." oninput="App.filterFiles(this.value)">
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-primary" onclick="App.openEditor()">➕ File mới</button>
-                <button class="btn-danger" onclick="Modals.showDeleteAll()">⚠️ Xóa tất cả</button>
-            </div>
+            <h2>Kho Code Của Bạn</h2>
+            <button class="btn-primary" onclick="App.openEditor()">➕ Tạo File Mới</button>
         </div>
-        
-        <div class="stats-bar">
-            <span id="fileCountText">Tổng số: 0 file</span>
-            <span>💡 Nhấp vào file để chỉnh sửa</span>
-        </div>
-
         <div class="file-list" id="fileListContainer"></div>
-        <div id="emptyState" class="hidden" style="text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--bg-panel); border: 1px dashed var(--border-color); border-radius: var(--radius); box-shadow: var(--shadow);">
-            <div style="font-size: 40px; margin-bottom: 10px;">📂</div>
-            Chưa có file nào hoặc không tìm thấy kết quả. <br>Hãy tạo một file mới ngay nhé!
-        </div>
     </div>
 
     <div id="editorScreen" class="container hidden">
         <div class="editor-header">
             <button onclick="App.showDashboard()">🔙 Quay lại</button>
             <input type="text" id="filenameInput" placeholder="Tên file (VD: script.js)">
-            <button class="btn-primary" onclick="App.saveFile()">💾 Lưu File</button>
-            <button onclick="App.downloadCurrentFile()">⬇️ Tải xuống</button>
+            <button class="btn-primary" onclick="App.saveFile()">☁️ Lưu lên Cloud</button>
         </div>
-        <div class="code-wrapper">
-            <textarea id="codeEditor" class="code-area" spellcheck="false" placeholder="// Bắt đầu gõ code tại đây..."></textarea>
-        </div>
-    </div>
-
-    <div id="modalDeleteSingle" class="modal-overlay hidden">
-        <div class="modal-box">
-            <h3 style="color: var(--btn-red-hover);">Xóa File?</h3>
-            <p>Bạn có chắc chắn muốn xóa file <strong id="deleteFileName" style="color: var(--text-main);"></strong> này không? Hành động này không thể hoàn tác.</p>
-            <div class="modal-actions">
-                <button onclick="Modals.hide('modalDeleteSingle')">Hủy</button>
-                <button class="btn-danger" onclick="App.confirmDeleteSingle()">Xóa File</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalDeleteAll" class="modal-overlay hidden">
-        <div class="modal-box">
-            <h3 style="color: var(--btn-red-hover);">Cảnh báo Bảo mật ☢️</h3>
-            <p>Hành động này sẽ xóa <strong>TOÀN BỘ</strong> file trong kho lưu trữ của bạn. Để xác nhận, vui lòng nhập mật khẩu tài khoản:</p>
-            <input type="password" id="confirmPasswordInput" placeholder="Nhập mật khẩu..." style="width: 100%; margin-bottom: 20px;">
-            <div class="modal-actions">
-                <button onclick="Modals.hide('modalDeleteAll')">Hủy bỏ</button>
-                <button class="btn-danger" onclick="App.confirmDeleteAll()">Xác nhận Xóa tất cả</button>
-            </div>
-        </div>
+        <textarea id="codeEditor" class="code-area"></textarea>
     </div>
 
     <script>
-        const Theme = {
-            init: () => {
-                const savedTheme = localStorage.getItem('devhub_theme') || 'dark';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                Theme.updateIcon(savedTheme);
-            },
-            toggle: () => {
-                const current = document.documentElement.getAttribute('data-theme');
-                const next = current === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', next);
-                localStorage.setItem('devhub_theme', next);
-                Theme.updateIcon(next);
-            },
-            updateIcon: (theme) => {
-                document.querySelectorAll('#themeToggleBtn, #themeToggleBtnAuth').forEach(btn => {
-                    btn.innerHTML = theme === 'dark' ? '🌙 Giao diện' : '☀️ Giao diện';
-                });
-            }
+        // ==========================================
+        // 1. DÁN FIREBASE CONFIG CỦA BẠN VÀO ĐÂY
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "devhub-project3000.firebaseapp.com",
+            projectId: "devhub-project3000",
+            storageBucket: "devhub-project3000.appspot.com",
+            messagingSenderId: "181873508934",
+            appId: "1:181873508934:web:3d6d087d942f8140efc047",
+            measurementId: "G-SPXTDDCY8"
         };
+
+        // ==========================================
+        // 2. KHỞI TẠO FIREBASE CLOUD
+        // ==========================================
+        if(!firebaseConfig.apiKey) {
+            alert("LỖI: Bạn chưa dán cấu hình Firebase config vào code!");
+        } else {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
 
         const Toast = {
-            show: (msg, type = 'success') => {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.innerText = msg;
-                container.appendChild(toast);
-                setTimeout(() => { toast.remove(); }, 3000);
+            show: (msg) => {
+                const c = document.getElementById('toastContainer');
+                const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
+                c.appendChild(t); setTimeout(() => t.remove(), 3000);
             }
         };
 
-        const DB = {
-            // Lấy danh sách toàn bộ các user đã đăng ký trên thiết bị/trình duyệt này
-            getUsers: () => JSON.parse(localStorage.getItem('devhub_users')) || [],
-            saveUsers: (users) => localStorage.setItem('devhub_users', JSON.stringify(users)),
-            
-            // Lấy user đang đăng nhập hiện tại
-            getCurrentUser: () => JSON.parse(localStorage.getItem('devhub_current_user')),
-            setCurrentUser: (user) => localStorage.setItem('devhub_current_user', JSON.stringify(user)),
-            clearCurrentUser: () => localStorage.removeItem('devhub_current_user'),
-
-            // Lấy file riêng biệt theo từng username để tránh ghi đè/mất dữ liệu khi đổi tài khoản hoặc mở ẩn danh
-            getFiles: () => {
-                const user = DB.getCurrentUser();
-                if (!user) return [];
-                return JSON.parse(localStorage.getItem(`devhub_files_${user.username}`)) || [];
-            },
-            setFiles: (files) => {
-                const user = DB.getCurrentUser();
-                if (!user) return;
-                localStorage.setItem(`devhub_files_${user.username}`, JSON.stringify(files));
-            }
+        const SyncUI = {
+            show: () => document.getElementById('syncStatus').classList.remove('hidden'),
+            hide: () => document.getElementById('syncStatus').classList.add('hidden')
         };
 
-        const State = {
-            currentEditingId: null, fileToDelete: null
-        };
+        let currentUser = null;
+        let currentFiles = [];
+        let editingId = null;
 
-        const Modals = {
-            show: (id) => document.getElementById(id).classList.remove('hidden'),
-            hide: (id) => {
-                document.getElementById(id).classList.add('hidden');
-                document.querySelectorAll(`#${id} input`).forEach(i => i.value = '');
+        const Auth = {
+            register: async () => {
+                const u = document.getElementById('loginUser').value.trim();
+                const p = document.getElementById('loginPass').value.trim();
+                if(!u || !p) return Toast.show("Nhập đủ thông tin!");
+                
+                SyncUI.show();
+                try {
+                    const docRef = await db.collection("users").doc(u).get();
+                    if(docRef.exists) { Toast.show("Tài khoản đã tồn tại!"); }
+                    else {
+                        await db.collection("users").doc(u).set({ password: p });
+                        currentUser = u;
+                        Toast.show("Đăng ký thành công!");
+                        App.showDashboard();
+                    }
+                } catch(e) { console.error(e); Toast.show("Lỗi mạng!"); }
+                SyncUI.hide();
             },
-            showDeleteSingle: (id, name) => {
-                State.fileToDelete = id;
-                document.getElementById('deleteFileName').innerText = name;
-                Modals.show('modalDeleteSingle');
-            },
-            showDeleteAll: () => {
-                if (DB.getFiles().length === 0) return Toast.show("Kho lưu trữ đã trống!", "warning");
-                Modals.show('modalDeleteAll');
+            login: async () => {
+                const u = document.getElementById('loginUser').value.trim();
+                const p = document.getElementById('loginPass').value.trim();
+                if(!u || !p) return Toast.show("Nhập đủ thông tin!");
+
+                SyncUI.show();
+                try {
+                    const docRef = await db.collection("users").doc(u).get();
+                    if(docRef.exists && docRef.data().password === p) {
+                        currentUser = u;
+                        Toast.show("Đăng nhập thành công!");
+                        App.showDashboard();
+                    } else { Toast.show("Sai tài khoản hoặc mật khẩu!"); }
+                } catch(e) { console.error(e); Toast.show("Lỗi mạng!"); }
+                SyncUI.hide();
             }
         };
 
         const App = {
-            init: () => {
-                Theme.init();
-                const currentUser = DB.getCurrentUser();
-                if (currentUser) { 
-                    App.showDashboard(); 
-                } else { 
-                    App.showAuth(); 
-                }
-            },
-
-            login: () => {
-                const u = document.getElementById('authUsername').value.trim();
-                const p = document.getElementById('authPassword').value.trim();
-                if (!u || !p) return Toast.show("Vui lòng nhập đủ thông tin!", "warning");
-
-                let users = DB.getUsers();
-                let existingUser = users.find(item => item.username === u);
-
-                if (existingUser) {
-                    // Nếu tài khoản đã tồn tại, kiểm tra mật khẩu
-                    if (existingUser.password === p) {
-                        DB.setCurrentUser(existingUser);
-                        Toast.show(`Chào mừng trở lại, ${u}!`);
-                        App.showDashboard();
-                    } else {
-                        Toast.show("Sai mật khẩu tài khoản!", "error");
-                    }
-                } else {
-                    // Nếu tài khoản chưa tồn tại trên trình duyệt này, tạo mới và lưu vào danh sách chung
-                    const newUser = { username: u, password: p };
-                    users.push(newUser);
-                    DB.saveUsers(users);
-                    DB.setCurrentUser(newUser);
-                    Toast.show("Đã khởi tạo tài khoản mới thành công!");
-                    App.showDashboard();
-                }
-            },
-
-            logout: () => { 
-                DB.clearCurrentUser(); 
-                App.showAuth(); 
-            },
-
-            showAuth: () => {
-                document.getElementById('authScreen').classList.remove('hidden');
-                document.getElementById('mainHeader').classList.add('hidden');
-                document.getElementById('dashboardScreen').classList.add('hidden');
-                document.getElementById('editorScreen').classList.add('hidden');
-            },
-
-            showDashboard: () => {
+            logout: () => { currentUser = null; document.getElementById('authScreen').classList.remove('hidden'); document.getElementById('mainHeader').classList.add('hidden'); document.getElementById('dashboardScreen').classList.add('hidden'); document.getElementById('editorScreen').classList.add('hidden'); },
+            showDashboard: async () => {
                 document.getElementById('authScreen').classList.add('hidden');
                 document.getElementById('editorScreen').classList.add('hidden');
                 document.getElementById('mainHeader').classList.remove('hidden');
                 document.getElementById('dashboardScreen').classList.remove('hidden');
+                document.getElementById('displayUsername').innerText = `👤 ${currentUser}`;
                 
-                const currentUser = DB.getCurrentUser();
-                document.getElementById('displayUsername').innerText = `👤 ${currentUser ? currentUser.username : ''}`;
-                document.getElementById('searchInput').value = ''; 
-                App.renderFiles(DB.getFiles());
+                SyncUI.show();
+                currentFiles = [];
+                const snapshot = await db.collection("users").doc(currentUser).collection("files").get();
+                snapshot.forEach(doc => { currentFiles.push({ id: doc.id, ...doc.data() }); });
+                SyncUI.hide();
+                App.renderFiles();
             },
-
-            getFileBadge: (filename) => {
-                const ext = filename.split('.').pop().toLowerCase();
-                if (ext === 'js') return `<span class="badge js">JS</span>`;
-                if (ext === 'html') return `<span class="badge html">HTML</span>`;
-                if (ext === 'css') return `<span class="badge css">CSS</span>`;
-                if (ext === 'py') return `<span class="badge py">Python</span>`;
-                if (ext === 'json') return `<span class="badge json">JSON</span>`;
-                return `<span class="badge txt">TXT</span>`;
-            },
-
-            renderFiles: (filesToRender) => {
-                const container = document.getElementById('fileListContainer');
-                const emptyState = document.getElementById('emptyState');
-                const fileCountText = document.getElementById('fileCountText');
-                
-                container.innerHTML = '';
-                fileCountText.innerText = `Tổng số: ${filesToRender.length} file`;
-
-                if (filesToRender.length === 0) {
-                    container.classList.add('hidden');
-                    emptyState.classList.remove('hidden');
-                    return;
-                }
-
-                container.classList.remove('hidden');
-                emptyState.classList.add('hidden');
-
-                filesToRender.sort((a, b) => b.timestamp - a.timestamp).forEach((file, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'file-item';
-                    item.style.animation = `fadeInScreen 0.3s ease ${index * 0.04}s forwards`;
-                    item.innerHTML = `
-                        <div class="file-info" onclick="App.openEditor(${file.id})">
-                            📄 <span class="file-name">${file.name}</span>
-                            ${App.getFileBadge(file.name)}
-                        </div>
-                        <button class="btn-delete" title="Xóa file" onclick="Modals.showDeleteSingle(${file.id}, '${file.name}')">✖</button>
+            renderFiles: () => {
+                const c = document.getElementById('fileListContainer'); c.innerHTML = '';
+                currentFiles.forEach(f => {
+                    const div = document.createElement('div'); div.className = 'file-item';
+                    div.innerHTML = `
+                        <div class="file-info" onclick="App.openEditor('${f.id}')">📄 ${f.name}</div>
+                        <button class="btn-danger" onclick="App.deleteFile('${f.id}')">Xóa</button>
                     `;
-                    container.appendChild(item);
+                    c.appendChild(div);
                 });
             },
-
-            filterFiles: (query) => {
-                const lowerQuery = query.toLowerCase();
-                const filtered = DB.getFiles().filter(f => f.name.toLowerCase().includes(lowerQuery));
-                App.renderFiles(filtered);
-            },
-
             openEditor: (id = null) => {
-                State.currentEditingId = id;
-                const input = document.getElementById('filenameInput');
-                const editor = document.getElementById('codeEditor');
-
+                editingId = id;
+                const i = document.getElementById('filenameInput');
+                const e = document.getElementById('codeEditor');
                 if (id) {
-                    const file = DB.getFiles().find(f => f.id === id);
-                    if (file) {
-                        input.value = file.name; 
-                        editor.value = file.content;
-                    }
+                    const file = currentFiles.find(f => f.id === id);
+                    i.value = file.name; e.value = file.content;
                 } else {
-                    input.value = `index.html`; 
-                    editor.value = '';
+                    i.value = `file_${Math.floor(Math.random()*1000)}.js`; e.value = '';
                 }
-
                 document.getElementById('dashboardScreen').classList.add('hidden');
                 document.getElementById('editorScreen').classList.remove('hidden');
             },
-
-            saveFile: () => {
+            saveFile: async () => {
                 const name = document.getElementById('filenameInput').value.trim();
                 const content = document.getElementById('codeEditor').value;
-                if (!name) return Toast.show("Tên file không được trống!", "error");
+                if (!name) return Toast.show("Thiếu tên file!");
 
-                let files = DB.getFiles();
-                if (State.currentEditingId) {
-                    const idx = files.findIndex(f => f.id === State.currentEditingId);
-                    if (idx !== -1) { 
-                        files[idx].name = name; 
-                        files[idx].content = content; 
-                        files[idx].timestamp = Date.now(); 
-                    }
+                SyncUI.show();
+                const collectionRef = db.collection("users").doc(currentUser).collection("files");
+                if (editingId) {
+                    await collectionRef.doc(editingId).update({ name, content, timestamp: Date.now() });
                 } else {
-                    const newFile = { id: Date.now(), name, content, timestamp: Date.now() };
-                    files.push(newFile);
-                    State.currentEditingId = newFile.id; 
+                    await collectionRef.add({ name, content, timestamp: Date.now() });
                 }
-
-                DB.setFiles(files);
-                Toast.show("Đã lưu file thành công!");
+                SyncUI.hide();
+                Toast.show("Đã đẩy code lên Đám Mây thành công! ☁️");
+                App.showDashboard();
             },
-
-            downloadCurrentFile: () => {
-                const name = document.getElementById('filenameInput').value.trim() || "download.txt";
-                const content = document.getElementById('codeEditor').value;
-                
-                const ext = name.split('.').pop().toLowerCase();
-                let mimeType = "text/plain";
-                if (ext === 'html') mimeType = "text/html";
-                else if (ext === 'css') mimeType = "text/css";
-                else if (ext === 'js') mimeType = "application/javascript";
-                else if (ext === 'json') mimeType = "application/json";
-                else if (ext === 'py') mimeType = "text/x-python";
-                
-                const blob = new Blob([content], { type: mimeType });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = name;
-                
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                URL.revokeObjectURL(a.href);
-                Toast.show(`Đang tải xuống ${name}...`);
-            },
-
-            confirmDeleteSingle: () => {
-                DB.setFiles(DB.getFiles().filter(f => f.id !== State.fileToDelete));
-                Modals.hide('modalDeleteSingle');
-                App.renderFiles(DB.getFiles());
-                Toast.show("Đã xóa file thành công!");
-            },
-
-            confirmDeleteAll: () => {
-                const inputPass = document.getElementById('confirmPasswordInput').value;
-                const currentUser = DB.getCurrentUser();
-                if (inputPass !== currentUser.password) {
-                    Toast.show("Mật khẩu sai! Từ chối truy cập.", "error");
-                    return;
-                }
-                DB.setFiles([]);
-                Modals.hide('modalDeleteAll');
-                App.renderFiles(DB.getFiles());
-                Toast.show("Đã xóa toàn bộ file trong hệ thống!", "success");
+            deleteFile: async (id) => {
+                if(!confirm("Xóa file này vĩnh viễn trên Cloud?")) return;
+                SyncUI.show();
+                await db.collection("users").doc(currentUser).collection("files").doc(id).delete();
+                SyncUI.hide();
+                App.showDashboard();
             }
         };
-
-        App.init();
     </script>
 </body>
 </html>
