@@ -33,7 +33,6 @@
         body { background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         .hidden { display: none !important; }
 
-        /* Animation chuyển màn hình tổng thể */
         .container { max-width: 950px; margin: 40px auto; width: 100%; padding: 0 20px; flex: 1; animation: fadeInScreen 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fadeInScreen {
             from { opacity: 0; transform: translateY(12px); }
@@ -44,7 +43,6 @@
         .logo { font-size: 1.5rem; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
         .user-info { display: flex; align-items: center; gap: 15px; }
 
-        /* Hiệu ứng Nút bấm (Button Animations) */
         button { 
             cursor: pointer; padding: 8px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500; 
             border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); 
@@ -82,7 +80,6 @@
 
         .stats-bar { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* Hiệu ứng trượt mượt cho Danh sách File */
         .file-list { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
         .file-item { 
             display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; 
@@ -92,7 +89,7 @@
         .file-item:last-child { border-bottom: none; }
         .file-item:hover { 
             background: var(--item-hover); 
-            padding-left: 26px; /* Hiệu ứng vuốt/đẩy nhẹ sang phải cực mượt */
+            padding-left: 26px; 
             border-left: 4px solid var(--accent-blue);
         }
         .file-info { display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; }
@@ -120,7 +117,6 @@
         }
         .code-area:focus { box-shadow: inset 0 0 0 2px var(--accent-blue); }
 
-        /* Animation cho Popup Modal */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; 
@@ -142,7 +138,6 @@
         .modal-box p { margin-bottom: 20px; color: var(--text-muted); font-size: 14px; line-height: 1.4; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
 
-        /* Hiệu ứng Toast thông báo trượt vào từ góc màn hình */
         #toastContainer { position: fixed; bottom: 25px; right: 25px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
         .toast { 
             min-width: 260px; padding: 14px 20px; border-radius: var(--radius); background: var(--bg-panel); 
@@ -244,7 +239,7 @@
     <div id="modalDeleteAll" class="modal-overlay hidden">
         <div class="modal-box">
             <h3 style="color: var(--btn-red-hover);">Cảnh báo Bảo mật ☢️</h3>
-            <p>Hành động này sẽ xóa <strong>TOÀN BỘ</strong> file trong kho lưu trữ. Để xác nhận, vui lòng nhập mật khẩu tài khoản của bạn:</p>
+            <p>Hành động này sẽ xóa <strong>TOÀN BỘ</strong> file trong kho lưu trữ của bạn. Để xác nhận, vui lòng nhập mật khẩu tài khoản:</p>
             <input type="password" id="confirmPasswordInput" placeholder="Nhập mật khẩu..." style="width: 100%; margin-bottom: 20px;">
             <div class="modal-actions">
                 <button onclick="Modals.hide('modalDeleteAll')">Hủy bỏ</button>
@@ -286,14 +281,30 @@
         };
 
         const DB = {
-            getUser: () => JSON.parse(localStorage.getItem('devhub_user')),
-            setUser: (user) => localStorage.setItem('devhub_user', JSON.stringify(user)),
-            getFiles: () => JSON.parse(localStorage.getItem('devhub_files')) || [],
-            setFiles: (files) => localStorage.setItem('devhub_files', JSON.stringify(files))
+            // Lấy danh sách toàn bộ các user đã đăng ký trên thiết bị/trình duyệt này
+            getUsers: () => JSON.parse(localStorage.getItem('devhub_users')) || [],
+            saveUsers: (users) => localStorage.setItem('devhub_users', JSON.stringify(users)),
+            
+            // Lấy user đang đăng nhập hiện tại
+            getCurrentUser: () => JSON.parse(localStorage.getItem('devhub_current_user')),
+            setCurrentUser: (user) => localStorage.setItem('devhub_current_user', JSON.stringify(user)),
+            clearCurrentUser: () => localStorage.removeItem('devhub_current_user'),
+
+            // Lấy file riêng biệt theo từng username để tránh ghi đè/mất dữ liệu khi đổi tài khoản hoặc mở ẩn danh
+            getFiles: () => {
+                const user = DB.getCurrentUser();
+                if (!user) return [];
+                return JSON.parse(localStorage.getItem(`devhub_files_${user.username}`)) || [];
+            },
+            setFiles: (files) => {
+                const user = DB.getCurrentUser();
+                if (!user) return;
+                localStorage.setItem(`devhub_files_${user.username}`, JSON.stringify(files));
+            }
         };
 
         const State = {
-            currentUser: null, currentEditingId: null, fileToDelete: null
+            currentEditingId: null, fileToDelete: null
         };
 
         const Modals = {
@@ -316,9 +327,12 @@
         const App = {
             init: () => {
                 Theme.init();
-                const user = DB.getUser();
-                if (user) { State.currentUser = user; App.showDashboard(); } 
-                else { App.showAuth(); }
+                const currentUser = DB.getCurrentUser();
+                if (currentUser) { 
+                    App.showDashboard(); 
+                } else { 
+                    App.showAuth(); 
+                }
             },
 
             login: () => {
@@ -326,22 +340,33 @@
                 const p = document.getElementById('authPassword').value.trim();
                 if (!u || !p) return Toast.show("Vui lòng nhập đủ thông tin!", "warning");
 
-                const user = DB.getUser();
-                if (user) {
-                    if (user.username === u && user.password === p) {
-                        State.currentUser = user;
+                let users = DB.getUsers();
+                let existingUser = users.find(item => item.username === u);
+
+                if (existingUser) {
+                    // Nếu tài khoản đã tồn tại, kiểm tra mật khẩu
+                    if (existingUser.password === p) {
+                        DB.setCurrentUser(existingUser);
                         Toast.show(`Chào mừng trở lại, ${u}!`);
                         App.showDashboard();
-                    } else Toast.show("Sai tên đăng nhập hoặc mật khẩu!", "error");
+                    } else {
+                        Toast.show("Sai mật khẩu tài khoản!", "error");
+                    }
                 } else {
-                    DB.setUser({ username: u, password: p });
-                    State.currentUser = { username: u, password: p };
+                    // Nếu tài khoản chưa tồn tại trên trình duyệt này, tạo mới và lưu vào danh sách chung
+                    const newUser = { username: u, password: p };
+                    users.push(newUser);
+                    DB.saveUsers(users);
+                    DB.setCurrentUser(newUser);
                     Toast.show("Đã khởi tạo tài khoản mới thành công!");
                     App.showDashboard();
                 }
             },
 
-            logout: () => { State.currentUser = null; App.showAuth(); },
+            logout: () => { 
+                DB.clearCurrentUser(); 
+                App.showAuth(); 
+            },
 
             showAuth: () => {
                 document.getElementById('authScreen').classList.remove('hidden');
@@ -355,7 +380,9 @@
                 document.getElementById('editorScreen').classList.add('hidden');
                 document.getElementById('mainHeader').classList.remove('hidden');
                 document.getElementById('dashboardScreen').classList.remove('hidden');
-                document.getElementById('displayUsername').innerText = `👤 ${State.currentUser.username}`;
+                
+                const currentUser = DB.getCurrentUser();
+                document.getElementById('displayUsername').innerText = `👤 ${currentUser ? currentUser.username : ''}`;
                 document.getElementById('searchInput').value = ''; 
                 App.renderFiles(DB.getFiles());
             },
@@ -415,9 +442,13 @@
 
                 if (id) {
                     const file = DB.getFiles().find(f => f.id === id);
-                    input.value = file.name; editor.value = file.content;
+                    if (file) {
+                        input.value = file.name; 
+                        editor.value = file.content;
+                    }
                 } else {
-                    input.value = `index.html`; editor.value = '';
+                    input.value = `index.html`; 
+                    editor.value = '';
                 }
 
                 document.getElementById('dashboardScreen').classList.add('hidden');
@@ -432,10 +463,15 @@
                 let files = DB.getFiles();
                 if (State.currentEditingId) {
                     const idx = files.findIndex(f => f.id === State.currentEditingId);
-                    if (idx !== -1) { files[idx].name = name; files[idx].content = content; files[idx].timestamp = Date.now(); }
+                    if (idx !== -1) { 
+                        files[idx].name = name; 
+                        files[idx].content = content; 
+                        files[idx].timestamp = Date.now(); 
+                    }
                 } else {
-                    files.push({ id: Date.now(), name, content, timestamp: Date.now() });
-                    State.currentEditingId = files[files.length - 1].id; 
+                    const newFile = { id: Date.now(), name, content, timestamp: Date.now() };
+                    files.push(newFile);
+                    State.currentEditingId = newFile.id; 
                 }
 
                 DB.setFiles(files);
@@ -476,7 +512,8 @@
 
             confirmDeleteAll: () => {
                 const inputPass = document.getElementById('confirmPasswordInput').value;
-                if (inputPass !== State.currentUser.password) {
+                const currentUser = DB.getCurrentUser();
+                if (inputPass !== currentUser.password) {
                     Toast.show("Mật khẩu sai! Từ chối truy cập.", "error");
                     return;
                 }
